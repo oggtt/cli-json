@@ -5,47 +5,46 @@ import java.net.http.HttpResponse;
 
 public class SimpleHttpClient {
 
-    public static String postJson(String url, String json) throws Exception {
-        HttpClient client = HttpClient.newHttpClient();
+    private static final HttpClient CLIENT = HttpClient.newHttpClient();
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .build();
-
-        HttpResponse<String> response =
-                client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        return response.body();
+    public enum Method {
+        GET, POST, PUT
     }
 
-    public static String get(String url) throws Exception {
-        HttpClient client = HttpClient.newHttpClient();
+    public static String request(String url, Method method, String body) {
+        try {
+            HttpRequest.Builder builder = HttpRequest.newBuilder()
+                    .uri(URI.create(url));
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .GET()
-                .build();
+            switch (method) {
+                case GET -> builder.GET();
+                case POST -> builder.header("Content-Type", "application/json")
+                                    .POST(HttpRequest.BodyPublishers.ofString(body));
+                case PUT -> builder.header("Content-Type", "application/json")
+                                   .PUT(HttpRequest.BodyPublishers.ofString(body));
+            }
 
-        HttpResponse<String> response =
-                client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpRequest request = builder.build();
 
-        return response.body();
+            HttpResponse<String> response =
+                    CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+
+            return response.body();
+
+        } catch (Exception e) {
+            throw new RuntimeException("HTTP request failed: " + e.getMessage(), e);
+        }
     }
 
-    public static String putJson(String url, String json) throws Exception {
-        HttpClient client = HttpClient.newHttpClient();
+    public static String get(String url) {
+        return request(url, Method.GET, null);
+    }
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Content-Type", "application/json")
-                .PUT(HttpRequest.BodyPublishers.ofString(json))
-                .build();
+    public static String postJson(String url, String json) {
+        return request(url, Method.POST, json);
+    }
 
-        HttpResponse<String> response =
-                client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        return response.body();
+    public static String putJson(String url, String json) {
+        return request(url, Method.PUT, json);
     }
 }

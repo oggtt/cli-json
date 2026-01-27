@@ -1,4 +1,4 @@
-package protocol;
+package app.protocol;
 
 import org.json.JSONObject;
 
